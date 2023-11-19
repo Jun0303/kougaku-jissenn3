@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <title>project</title>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width">
+        <meta name="description" content="カレンダーと共にアルバイトやパートの月給を計算し表示します。また、貯金額や固定費を計算し、その月の利用可能額または月比較します。" />
+        <link rel="stylesheet" href="project.CSS">
+        <!-- <link rel="stylesheet" href="graph.css"> -->
+        <script src="./project.Js"></script>
+        <!-- <script src="./graph.js"></script> -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.js"></script>
+        <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1"></script> -->
+        <!-- <meta name="viewport" content="width=device-width,initial-scale=1.0"> -->
+        <!--==============レイアウトを制御する独自のCSSを読み込み===============-->
+        <!-- <link rel="stylesheet" type="text/css" href="https://coco-factory.jp/ugokuweb/wp-content/themes/ugokuweb/data/reset.css">
+        <link rel="stylesheet" type="text/css" href="https://coco-factory.jp/ugokuweb/wp-content/themes/ugokuweb/data/9-5-3/css/9-5-3.css"> -->
+        <!--<link rel="stylesheet" href="calender.css">-->
+    </head>
+    <style>
+        @charset "utf-8";
+    
+    /*全体*/
+    .wrapper{
+        max-width: 600px;
+        margin: 0 auto;
+        color: #666;
+    }
+    #header {
+        text-align: center;
+        font-size: 24px;
+        width: 100%;
+        margin: 1rem 0 0;
+    }
+    
+    /*カレンダー*/
+    #calendar {
+        text-align: center;
+        width: 100%;
+    }
+    table {
+        outline: 2px solid #ddd;
+        border-collapse: collapse;
+        width: 100%;
+    }
+    th {
+        color: #000;
+        font-weight: bold;
+    }
+    th, td {
+        outline: 1px solid #ddd;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        text-align: center;
+    }
+    /*日曜日*/
+    td:first-child {
+        color: red;
+    }
+    /*土曜日*/
+    td:last-child {
+        color: blue;
+    }
+    /*前後月の日付*/
+    td.disabled {
+        color: #ccc;
+    }
+    /*本日*/
+    td.today {
+        background-color: #D65E72;
+        color: #fff;
+    }
+    
+    /*ボタン*/
+    #next-prev-button {
+        position: relative;
+    }
+    #next-prev-button button{
+        cursor: pointer;
+        background: green;
+        color: #fff;
+        border: 1px solid green;
+        border-radius: 4px;
+        font-size: 1rem;
+        padding: 0.5rem 2rem;
+        margin: 1rem 0;
+    }
+    #next-prev-button button:hover{
+        background-color: green;
+        border-color: green;
+    }
+    #prev {
+        float: left;
+    }
+    #next {
+        float: right;
+    }
+    </style>
+    <body> 
+    <div class="tab-panel">
+        <ul class="tab-group">
+            <li class="tab tab-A is-active">シフト計算</li>
+            <li class="tab tab-B">可能額計算</li>
+            <li class="tab tab-C">＋ー詳細</li> 
+            <li class="tab tab-D">月比</li>
+        </ul>
+
+        <!--タブを切り替えて表示するコンテンツ-->
+        <div class="panel-group">
+            <div class="panel tab-A is-show">
+                <header><h1>月財布</h1></header>
+                <div class="wrapper">
+                    <h1 id="header"></h1>
+            
+                        <!-- ボタンクリックで月移動 -->
+                     <div id="next-prev-button">
+                         <button id="prev" onclick="prev()">‹</button>
+                         <button id="next" onclick="next()">›</button>
+                     </div>
+                    <div id="calendar"></div>
+                </div>
+                <form method="get" action="project.HTML" oninput="result_shuunyu.value = Number(a.value) * Number(b.value) * Number(c.value);">
+                    <h3>日数/月</h3>
+                    <p><input type="number" name="a" value="0"></p>
+                    <h3>✖</h3>
+                    <h3>時給</h3>
+                    <p><input type="number" name="b" value="0"></p>
+                    <h3>✖</h3>
+                    <h3>時間/一日</h3>
+                    <p><input type="number" name="c" value="0"></p>
+                    <h2>計算結果：<output name="result_shuunyu">0</output></h2>
+                    <input id="dainyu" type="button" value="送信する" onclick="dainyuButton()">
+                    <p><input type="reset" value="リセット"></p>
+                </form>
+            </div>
+            <div class="panel tab-B">
+                <form method="get" action="project.HTML" oninput="result_temochi.value = Number(d.value) + Number(result_shuunyu.value) - Number(f.value);">
+                    <h3>貯金額</h3>
+                    <p><input type="number" name="d" value="0"></p>
+                    <h3>+</h3>
+                    <h3>収入</h3>
+                    <p><input type="number" name="result_shuunyu" value="0"></p>
+                    <h3>-</h3>
+                    <h3>固定費</h3>
+                    <p><input type="number" name="f" value="0"></p>
+                    <h2>計算結果：<output name="result_temochi">0</output></h2>
+                    <p><input type="submit" value="送信する"> <input type="reset" value="リセット"></p>
+                </form>
+            </div>
+            <div class="panel tab-C">
+                <h1>円グラフ</h1>
+                <form>
+                  <label for="rent">家賃:</label>
+                  <input type="text" id="rent" placeholder="1000">
+                  <br>
+                  <label for="utilities">光熱費:</label>
+                  <input type="text" id="utilities" placeholder="1000">
+                  <br>
+                  <label for="rent">水道代:</label>
+                  <input type="text" id="water" placeholder="1000">
+                  <br>
+                  <label for="subscription">スマホ代:</label>
+                  <input type="text" id="smartphone" placeholder="1000">
+                  <br>
+                  <label for="subscription">サブスク:</label>
+                  <input type="text" id="subscription" placeholder="1000">
+                  <br>
+                  <label for="subscription">交通費:</label>
+                  <input type="text" id="train" placeholder="1000">
+                  <br>
+                  <label for="subscription">その他:</label>
+                  <input type="text" id="est" placeholder="1000">
+                  <br>
+                  <button type="button" onclick="drawChart()">CHECK</button>
+
+                </form>
+
+                <script>
+                    function convertToNumbers() {
+                      var rent = parseInt(document.getElementById('rent').value);
+                      var utilities = parseInt(document.getElementById('utilities').value);
+                      var water = parseInt(document.getElementById('water').value);
+                      var smartphone = parseInt(document.getElementById('smartphone').value);
+                      var subscription = parseInt(document.getElementById('subscription').value);
+                      var train = parseInt(document.getElementById('train').value);
+                      var est = parseInt(document.getElementById('est').value);
+                
+                      // 数値に変換できない場合は0を設定
+                      if (isNaN(rent)) {
+                        rent = 0;
+                      }
+                      if (isNaN(utilities)) {
+                        utilities = 0;
+                      }
+                      if (isNaN(water)) {
+                        water = 0;
+                      }
+                      if (isNaN(smartphone)) {
+                        smartphone = 0;
+                      }
+                      if (isNaN(subscription)) {
+                        subscription = 0;
+                      }
+                      if (isNaN(train)) {
+                        train = 0;
+                      }
+                      if (isNaN(est)) {
+                        est = 0;
+                      }
+                
+                      return [rent, utilities,water,smartphone, subscription,train,est];
+                    }
+                
+                    function drawChart() {
+                      var data = convertToNumbers();
+                      console.log(data)
+                
+                      var ctx = document.getElementById('myChart').getContext('2d');
+                      var mySecoudChart = new Chart(ctx, {
+                        type: 'pie',
+                        data: {
+                          labels: ['家賃', '光熱費','水道代','スマホ代', 'サブスク','交通費','その他'],
+                          datasets: [{
+                            data: data,
+                            backgroundColor: ["#ff0000","#0000ff","#ff1493","#00bfff","#7fff00","#ffa500","#000000"],
+                          }]
+                        },
+                        options: {}
+                      });
+                    }
+                  </script>
+                <canvas id="myChart"></canvas>
+            </div>
+            <div class="panel tab-D">
+                <div>
+                    <canvas id="chart3"></canvas>
+                </div>
+                
+                <script>
+                    var ctx = document.getElementById("chart3").getContext('2d');
+                    var myChart = new Chart(ctx, {
+                        type: "horizontalBar",    // ★必須　グラフの種類
+                        data: {
+                            labels:  ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],  // Ｘ軸のラベル
+                            datasets: [
+                                {
+                                    label: "貯金額",                            // 系列名
+                                    data: [10, 22, 10, 9, 12, 11, 23, 14, 19, 22, 19, 21] ,                  // ★必須　系列Ａのデータ
+                                    backgroundColor: "blue",
+                                },
+                          
+                                
+                            ]
+                        },
+                    options: {                       // オプション
+                            responsive: true,  // canvasサイズ自動設定機能を使わない。HTMLで指定したサイズに固定
+                            scales: {                          // 軸設定
+                                xAxes: [{                       // Ｘ軸設定
+                                 stacked: true  // 積み上げの指定
+                                }],
+                                yAxes: [{
+                                        stacked: true,  // 積み上げの指定
+                                        display: true,                 // 表示の有無
+                                        ticks: {                       // 目盛り
+                                            min: 0,                        // 最小値
+                                            max: 30,                       // 最大値
+                                        },
+                                    }],
+                            },
+                        }
+                    });
+                  
+                </script>
+            </div>
+        </div>
+    </div>
+
+    </body>
+
+</html>
+<script type="text/javascript">
+    const week = ["日", "月", "火", "水", "木", "金", "土"];
+   const today = new Date();
+   // 月末だとずれる可能性があるため、1日固定で取得
+   var showDate = new Date(today.getFullYear(), today.getMonth(), 1);
+   
+   // 初期表示
+   window.onload = function () {
+       showProcess(today, calendar);
+   };
+   // 前の月表示
+   function prev(){
+       showDate.setMonth(showDate.getMonth() - 1);
+       showProcess(showDate);
+   }
+   
+   // 次の月表示
+   function next(){
+       showDate.setMonth(showDate.getMonth() + 1);
+       showProcess(showDate);
+   }
+   
+   // カレンダー表示
+   function showProcess(date) {
+       var year = date.getFullYear();
+       var month = date.getMonth();
+       document.querySelector('#header').innerHTML = year + "年 " + (month + 1) + "月";
+   
+       var calendar = createProcess(year, month);
+       document.querySelector('#calendar').innerHTML = calendar;
+   }
+   
+   // カレンダー作成
+   function createProcess(year, month) {
+       // 曜日
+       var calendar = "<table><tr class='dayOfWeek'>";
+       for (var i = 0; i < week.length; i++) {
+           calendar += "<th>" + week[i] + "</th>";
+       }
+       calendar += "</tr>";
+   
+       var count = 0;
+       var startDayOfWeek = new Date(year, month, 1).getDay();
+       var endDate = new Date(year, month + 1, 0).getDate();
+       var lastMonthEndDate = new Date(year, month, 0).getDate();
+       var row = Math.ceil((startDayOfWeek + endDate) / week.length);
+   
+       // 1行ずつ設定
+       for (var i = 0; i < row; i++) {
+           calendar += "<tr>";
+           // 1colum単位で設定
+           for (var j = 0; j < week.length; j++) {
+               if (i == 0 && j < startDayOfWeek) {
+                   // 1行目で1日まで先月の日付を設定
+                   calendar += "<td class='disabled'>" + (lastMonthEndDate - startDayOfWeek + j + 1) + "</td>";
+               } else if (count >= endDate) {
+                   // 最終行で最終日以降、翌月の日付を設定
+                   count++;
+                   calendar += "<td class='disabled'>" + (count - endDate) + "</td>";
+               } else {
+                   // 当月の日付を曜日に照らし合わせて設定
+                   count++;
+                   if(year == today.getFullYear()
+                     && month == (today.getMonth())
+                     && count == today.getDate()){
+                       calendar += "<td class='today'>" + count + "</td>";
+                   } else {
+                       calendar += "<td>" + count + "</td>";
+                   }
+               }
+           }
+           calendar += "</tr>";
+       }
+       return calendar;
+   }
+   </script>
